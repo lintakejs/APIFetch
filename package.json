@@ -1,0 +1,30 @@
+{
+  "name": "apifetch",
+  "version": "1.0.0",
+  "description": "给予axios封装的请求类",
+  "main": "index.js",
+  "scripts": {
+    "build": "cross-env NODE_ENV=production webpack --inline --progress --config build/webpack.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lintakejs/APIFetch.git"
+  },
+  "author": "Wei Lin",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/lintakejs/APIFetch/issues"
+  },
+  "homepage": "https://github.com/lintakejs/APIFetch#readme",
+  "devDependencies": {
+    "@babel/polyfill": "^7.4.4",
+    "cross-env": "^5.2.0",
+    "ts-loader": "^6.0.0",
+    "typescript": "^3.4.5",
+    "webpack": "^4.31.0",
+    "webpack-cli": "^3.3.2"
+  },
+  "dependencies": {
+    "axios": "^0.18.0"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "jsx":"react", //tsx转换为js，不是不是jsx
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "target": "es5",
+    "lib": [
+      "es6"
+    ],
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true
+  }
+}
