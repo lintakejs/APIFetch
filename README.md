@@ -28,11 +28,19 @@ const Fetch = new Fetch({
 ``` 
 
 ## API
+```javascript
   get (url: string, data?: object, options?: object)
+```
+```javascript
   post (url: string, data?: object, options?: object)
+```
+```javascript
   put (url: string, data?: object, options?: object)
+```
+```javascript
   delete (url: string, data?: object, options?: object)
-  
+```
+```javascript
   // 需要注意的是all 方法调用与其他方式不同，需要符合标准格式
   // all方法不触发beforeRequest与beforeResponse等，但是触发allBeforeRequest与allBeforeResponse
 
@@ -50,3 +58,4 @@ const Fetch = new Fetch({
       quite: true
     }
   )
+```
