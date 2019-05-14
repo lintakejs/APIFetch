@@ -7,11 +7,11 @@ ___
 
 You can install with npm.
 
-    npm install APIFetch
+    npm install api-fetch
 
 
 ```javascript
-import Fetch from 'APIFetch'
+import Fetch from 'api-fetch'
 
 const Fetch = new Fetch({
   baseUrl: '/',
