@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
-    "jsx":"react", //tsx转换为js，不是不是jsx
     "module": "commonjs",
     "moduleResolution": "node",
+    "outDir": "./dist",
+    "declaration": true,
+    "strict": true,
     "target": "es5",
     "lib": [
       "es6"
@@ -10,5 +12,7 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true
-  }
+  },
+  "include": ["src"],
+  "exclude": ["node_modules", "**/__tests__/*"]
 }
