@@ -1,4 +1,4 @@
 import '@babel/polyfill'
 
-import Fetch from './fetch'
+import Fetch from './src/fetch'
 export default Fetch

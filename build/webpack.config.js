@@ -5,7 +5,7 @@ module.exports = {
 
   mode: process.env.NODE_ENV,
 
-  entry: "./src/index.ts",
+  entry: "./index.ts",
 
   output: {
     path: path.resolve(__dirname, '../dist'),//输出路径，就是上步骤中新建的dist目录，
