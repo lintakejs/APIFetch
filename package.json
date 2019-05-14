@@ -1,6 +1,6 @@
 {
   "name": "api-fetch",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "给予axios封装的请求类",
   "typings": "./src/index.ts",
   "scripts": {
