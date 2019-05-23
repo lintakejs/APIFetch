@@ -4,6 +4,7 @@
   "description": "给予axios封装的请求类",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "sideEffects": false,
   "scripts": {
     "build": "tsc"
   },
