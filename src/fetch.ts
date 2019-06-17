@@ -57,7 +57,7 @@ export default class Fetch {
 
   public all (fetchAll: any) {
     return axios.all(fetchAll).then(axios.spread(function (...results) {
-      Promise.resolve(results)
+      return Promise.resolve(results)
     }))
   }
 

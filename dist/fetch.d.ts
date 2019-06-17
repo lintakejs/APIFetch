@@ -20,7 +20,7 @@ export default class Fetch {
     post(url: string, data?: object, options?: object): any;
     put(url: string, data?: object, options?: object): any;
     delete(url: string, data?: object, options?: object): any;
-    all(fetchAll: any): Promise<void>;
+    all(fetchAll: any): Promise<{}[]>;
     cancel(message: any): void;
     /**
      * 构建参数

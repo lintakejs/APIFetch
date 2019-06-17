@@ -42,7 +42,7 @@ var Fetch = /** @class */ (function () {
             for (var _i = 0; _i < arguments.length; _i++) {
                 results[_i] = arguments[_i];
             }
-            Promise.resolve(results);
+            return Promise.resolve(results);
         }));
     };
     // 取消请求
