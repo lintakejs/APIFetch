@@ -13,35 +13,25 @@ interface config {
   responseType?: any;
   // beforeRequest
   beforeRequest?: (config?: any, oldConfig?: any) => any;
-  allBeforeRequest?: (fetchOptions?: any, oldConfig?: any) => any;
   // requestError
   requestError?: (err?: any, config?: any) => any;
   // beforeResponse
   beforeResponse?: (data?: any, Config?: any, oldConfig?: any) => any;
-  allBeforeResponse?: (fetchOptionsAndResData?: any, oldConfig?: any) => any;
   // responseError
   responseError?: (err?: any, config?: any) => any;
 
   [propName: string]: any;
 }
 
-interface allParam {
-  methods: string,
-  url: string,
-  data?: any
-}
-
 export default class Fetch {
   config: config;
   fetchInstance: any;
-  fetchInstanceAll: any;
   requestInstance?: any;
   responseInstance?: any;
 
   constructor (config?: config) {
     this.config = config || {}
     this.fetchInstance = axios.create(config)
-    this.fetchInstanceAll = axios.create(config)
     this.initIntercept()
   }
 
@@ -65,24 +55,10 @@ export default class Fetch {
     return this.fetchInstance(config)
   }
 
-  public all (fetchAll: Array<allParam>, options: object = {}) {
-    let fetchList:any = [] 
-    let fetchOptionsList:any = []
-    fetchAll.map((item:allParam) => {
-      let itemConfig = this.constructArgs(item.methods, item.url, item.data)
-      fetchOptionsList.push(itemConfig)
-      fetchList.push(this.fetchInstanceAll(itemConfig))
-    })
-
-    this.config.allBeforeRequest && this.config.allBeforeRequest({fetchOptions: fetchOptionsList, options}, this.config)
-
-    return axios.all(fetchList).then(res => {
-      this.config.allBeforeResponse && this.config.allBeforeResponse({data: [...res], fetchOptionsList}, this.config)
-      return Promise.resolve(res)
-    }).catch(error => {
-      this.config.responseError && this.config.responseError(error, this.config)
-      Promise.reject(error)
-    })
+  public all (fetchAll: any) {
+    return axios.all(fetchAll).then(axios.spread(function (...results) {
+      Promise.resolve(results)
+    }))
   }
 
   // 取消请求

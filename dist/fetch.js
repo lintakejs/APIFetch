@@ -18,7 +18,6 @@ var Fetch = /** @class */ (function () {
     function Fetch(config) {
         this.config = config || {};
         this.fetchInstance = axios_1.default.create(config);
-        this.fetchInstanceAll = axios_1.default.create(config);
         this.initIntercept();
     }
     Fetch.prototype.get = function (url, data, options) {
@@ -37,24 +36,14 @@ var Fetch = /** @class */ (function () {
         var config = this.constructArgs('DELETE', url, data, options);
         return this.fetchInstance(config);
     };
-    Fetch.prototype.all = function (fetchAll, options) {
-        var _this = this;
-        if (options === void 0) { options = {}; }
-        var fetchList = [];
-        var fetchOptionsList = [];
-        fetchAll.map(function (item) {
-            var itemConfig = _this.constructArgs(item.methods, item.url, item.data);
-            fetchOptionsList.push(itemConfig);
-            fetchList.push(_this.fetchInstanceAll(itemConfig));
-        });
-        this.config.allBeforeRequest && this.config.allBeforeRequest({ fetchOptions: fetchOptionsList, options: options }, this.config);
-        return axios_1.default.all(fetchList).then(function (res) {
-            _this.config.allBeforeResponse && _this.config.allBeforeResponse({ data: res.slice(), fetchOptionsList: fetchOptionsList }, _this.config);
-            return Promise.resolve(res);
-        }).catch(function (error) {
-            _this.config.responseError && _this.config.responseError(error, _this.config);
-            Promise.reject(error);
-        });
+    Fetch.prototype.all = function (fetchAll) {
+        return axios_1.default.all(fetchAll).then(axios_1.default.spread(function () {
+            var results = [];
+            for (var _i = 0; _i < arguments.length; _i++) {
+                results[_i] = arguments[_i];
+            }
+            Promise.resolve(results);
+        }));
     };
     // 取消请求
     Fetch.prototype.cancel = function (message) {
