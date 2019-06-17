@@ -1,6 +1,6 @@
 {
   "name": "@type/api-fetch",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "给予axios封装的请求类",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
