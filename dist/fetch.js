@@ -1,23 +1,13 @@
-"use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
-Object.defineProperty(exports, "__esModule", { value: true });
-var axios_1 = require("axios");
-var CancelToken = axios_1.default.CancelToken;
-var source = CancelToken.source();
+import axios from 'axios';
+import HashMap from 'hashmap';
+var FetchCancelToken = axios.CancelToken;
 var Fetch = /** @class */ (function () {
     function Fetch(config) {
+        this.fetchSendCancelToken = [];
+        this.fetchSendCancelTokenHashMap = new HashMap();
+        this.fetchId = 1;
         this.config = config || {};
-        this.fetchInstance = axios_1.default.create(config);
+        this.fetchInstance = axios.create(config);
         this.initIntercept();
     }
     Fetch.prototype.get = function (url, data, options) {
@@ -36,19 +26,15 @@ var Fetch = /** @class */ (function () {
         var config = this.constructArgs('DELETE', url, data, options);
         return this.fetchInstance(config);
     };
-    Fetch.prototype.all = function (fetchAll) {
-        return axios_1.default.all(fetchAll).then(axios_1.default.spread(function () {
-            var results = [];
-            for (var _i = 0; _i < arguments.length; _i++) {
-                results[_i] = arguments[_i];
-            }
-            return Promise.resolve(results);
-        }));
-    };
+    // public all (fetchAll: any) {
+    //   return axios.all(fetchAll).then(axios.spread(function (...results) {
+    //     return Promise.resolve(results)
+    //   }))
+    // }
     // 取消请求
-    Fetch.prototype.cancel = function (message) {
-        return source.cancel(message);
-    };
+    // public cancel (message: any) {
+    //   return source.cancel(message)
+    // }
     /**
      * 构建参数
      *
@@ -62,28 +48,32 @@ var Fetch = /** @class */ (function () {
      * @param options
      */
     Fetch.prototype.constructArgs = function (methods, url, data, options) {
-        var fetchMethods = methods.toLowerCase();
         var config = {
-            method: fetchMethods,
+            method: methods.toLocaleLowerCase(),
             url: url,
-            options: options || {}
+            fetchId: this.fetchId++
         };
-        if (fetchMethods === 'get' || fetchMethods === 'delete') {
+        if (options) {
+            config.options = options;
+        }
+        if (methods === 'GET' || methods === 'DELETE') {
             config.params = data || {};
         }
         else {
             config.data = data || {};
         }
-        // 合并config
-        config = __assign({}, config, config.options);
-        // 添加 canceltoken
-        config.cancelToken = source.token;
+        config.cancelToken = new FetchCancelToken(function (cancel) {
+            config.cancel = cancel;
+        });
         return config;
     };
     // 初始化请求拦截器
     Fetch.prototype.initIntercept = function () {
         var _this = this;
-        this.requestInstance = this.fetchInstance.interceptors.request.use(function (config) {
+        this.fetchInstance.interceptors.request.use(function (config) {
+            // 执行前，需要增加cancelToken，并且放入数组中维护
+            _this.addFetchSendCancelToken(config);
+            // 如果初始化有前置方法，则执行
             if (_this.config.beforeRequest) {
                 var conf = _this.config.beforeRequest(config, _this.config);
                 return conf || config;
@@ -101,9 +91,12 @@ var Fetch = /** @class */ (function () {
             }
         });
         // 返回参数时拦截
-        this.responseInstance = this.fetchInstance.interceptors.response.use(function (response) {
+        this.fetchInstance.interceptors.response.use(function (response) {
+            // 在执行后需要清除之前存在的cancelToken
+            _this.removeFetchSendCancelToken(response);
             if (_this.config.beforeResponse) {
-                return _this.config.beforeResponse(response, _this.config, response.config);
+                var req = _this.config.beforeResponse(response, _this.config, response.config);
+                return req || response;
             }
             else {
                 return response;
@@ -118,6 +111,35 @@ var Fetch = /** @class */ (function () {
             }
         });
     };
+    Fetch.prototype.addFetchSendCancelToken = function (config) {
+        var requestConfig = {
+            url: (config.baseURL || '') + config.url,
+            method: config.method,
+            paramsOrData: (config.method === 'get' || config.method === 'delete') ? config.params : config.data
+        };
+        // 增加前需要取消原本已经存在的
+        this.cancelFetchSendCancelToken(requestConfig, config, 'req');
+        // hashMap增加一个请求参数存储
+        this.fetchSendCancelTokenHashMap.set(config.fetchId, JSON.stringify(requestConfig));
+    };
+    Fetch.prototype.removeFetchSendCancelToken = function (response) {
+        var config = response.config;
+        var responseConfig = {
+            url: config.url,
+            method: config.method,
+            paramsOrData: (config.method === 'get' || config.method === 'delete') ? config.params : JSON.parse(config.data)
+        };
+        this.cancelFetchSendCancelToken(responseConfig, config, 'res');
+    };
+    Fetch.prototype.cancelFetchSendCancelToken = function (sendConfig, config, type) {
+        var configIndex = this.fetchSendCancelTokenHashMap.search(JSON.stringify(sendConfig));
+        if (configIndex !== null) {
+            if (type === 'req') {
+                config.cancel('请求已取消');
+            }
+            this.fetchSendCancelTokenHashMap.remove(configIndex);
+        }
+    };
     return Fetch;
 }());
-exports.default = Fetch;
+export default Fetch;

@@ -1,27 +1,22 @@
-interface config {
-    baseURL?: string;
-    timeout?: number;
-    headers?: any;
-    withCredentials?: boolean;
-    responseType?: any;
-    beforeRequest?: (config?: any, oldConfig?: any) => any;
-    requestError?: (err?: any, config?: any) => any;
-    beforeResponse?: (data?: any, Config?: any, oldConfig?: any) => any;
-    responseError?: (err?: any, config?: any) => any;
+import { AxiosRequestConfig, AxiosResponse, AxiosPromise } from 'axios';
+interface apiFetchConfig extends AxiosRequestConfig {
+    beforeRequest?: (nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => void | apiFetchConfig;
+    requestError?: (err?: Error, nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => void | apiFetchConfig;
+    beforeResponse?: (responseData: AxiosResponse, nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => any;
+    responseError?: (err?: Error, nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => void | apiFetchConfig;
     [propName: string]: any;
 }
 export default class Fetch {
-    config: config;
-    fetchInstance: any;
-    requestInstance?: any;
-    responseInstance?: any;
-    constructor(config?: config);
-    get(url: string, data?: object, options?: object): any;
-    post(url: string, data?: object, options?: object): any;
-    put(url: string, data?: object, options?: object): any;
-    delete(url: string, data?: object, options?: object): any;
-    all(fetchAll: any): Promise<{}[]>;
-    cancel(message: any): void;
+    private config;
+    private fetchInstance;
+    private fetchSendCancelToken;
+    private fetchSendCancelTokenHashMap;
+    private fetchId;
+    constructor(config?: apiFetchConfig);
+    get(url: string, data?: any, options?: object): AxiosPromise<AxiosResponse>;
+    post(url: string, data?: any, options?: object): AxiosPromise<AxiosResponse>;
+    put(url: string, data?: any, options?: object): AxiosPromise<AxiosResponse>;
+    delete(url: string, data?: any, options?: object): AxiosPromise<AxiosResponse>;
     /**
      * 构建参数
      *
@@ -36,5 +31,8 @@ export default class Fetch {
      */
     private constructArgs;
     private initIntercept;
+    private addFetchSendCancelToken;
+    private removeFetchSendCancelToken;
+    private cancelFetchSendCancelToken;
 }
 export {};
