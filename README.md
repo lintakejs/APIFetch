@@ -2,7 +2,7 @@
 给予axios封装的请求类
 
 ## Usage
-
+增加拦截器钩子函数，并能处理重复的请求
 ___
 
 You can install with npm.
@@ -14,16 +14,10 @@ You can install with npm.
 import Fetch from 'api-fetch'
 
 const Fetch = new Fetch({
-  baseUrl: '/',
-  timeout: 8000,
-  beforeRequest: function () {},
-  beforeResponse: function () {},
-  // 等诸多axios的方法
-  /**
-   * 额外提供下列方法
-  */
-  allBeforeRequest: function (fetchOptions, oldConfig) {},
-  allBeforeResponse: function (fetchOptionsAndResData, oldConfig) {}
+  beforeRequest?: (nowConfig?: AxiosRequestConfig, initConfig?: AxiosRequestConfig) => void | AxiosRequestConfig;
+  requestError?: (err?: Error, nowConfig?: AxiosRequestConfig, initConfig?: AxiosRequestConfig) => void | AxiosRequestConfig;
+  beforeResponse?: (responseData: AxiosResponse, nowConfig?: AxiosRequestConfig, initConfig?: AxiosRequestConfig) => any;
+  responseError?: (err?: Error, nowConfig?: AxiosRequestConfig, initConfig?: AxiosRequestConfig) => void | AxiosRequestConfig;
 })
 ``` 
 
@@ -39,23 +33,4 @@ const Fetch = new Fetch({
 ```
 ```javascript
   delete (url: string, data?: object, options?: object)
-```
-```javascript
-  // 需要注意的是all 方法调用与其他方式不同，需要符合标准格式
-  // all方法不触发beforeRequest与beforeResponse等，但是触发allBeforeRequest与allBeforeResponse
-
-  all(
-    [
-      {
-        methods: 'get',
-        url: 'xxxxx',
-        data: {
-          x: 1
-        }
-      }
-    ],
-    {
-      quite: true
-    }
-  )
 ```
