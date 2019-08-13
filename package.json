@@ -24,6 +24,7 @@
     "typescript": "^3.4.5"
   },
   "dependencies": {
-    "axios": "^0.18.0"
+    "axios": "^0.18.0",
+    "hashmap": "^2.3.0"
   }
 }
