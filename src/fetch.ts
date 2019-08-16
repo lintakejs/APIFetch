@@ -1,66 +1,48 @@
 import axios, { Canceler, AxiosRequestConfig, AxiosInstance, AxiosResponse, AxiosPromise } from 'axios'
-import HashMap from 'hashmap'
+import { Observable } from 'rxjs'
 
 interface apiFetchConfig extends AxiosRequestConfig {
   beforeRequest?: (nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => void | apiFetchConfig;
-  requestError?: (err?: Error, nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => void | apiFetchConfig;
+  requestError?: (err?: Error, initConfig?: apiFetchConfig) => void | apiFetchConfig;
   beforeResponse?: (responseData: AxiosResponse, nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => any;
-  responseError?: (err?: Error, nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => void | apiFetchConfig;
-  [propName: string]: any;
+  responseError?: (err?: Error, initConfig?: apiFetchConfig) => void | apiFetchConfig;
+  cancel?: Canceler,
+  otherOptions?: object
 }
+
+interface AxiosObservable<T> extends Observable<AxiosResponse<T>>{}
 
 const FetchCancelToken = axios.CancelToken
 
 export default class Fetch {
   private config: apiFetchConfig;
   private fetchInstance: AxiosInstance;
-  private fetchSendCancelToken: Array<{
-    sendConfig: {
-      url: string | undefined,
-      method: string | undefined,
-      paramsOrData?: any
-    },
-    cancel: Canceler
-  }> = [];
-  private fetchSendCancelTokenHashMap = new HashMap()
-  private fetchId: number = 1;
 
-  constructor (config?: apiFetchConfig) {
-    this.config = config || {}
+  constructor (config: apiFetchConfig) {
+    this.config = config
     this.fetchInstance = axios.create(config)
     this.initIntercept()
   }
 
-  public get (url: string, data?: any, options?: object): AxiosPromise<AxiosResponse> {
+  public get<T = any> (url: string, data?: any, options?: object): AxiosObservable<T> {
     let config = this.constructArgs('GET', url, data, options)
-    return this.fetchInstance(config)
+    return this.createAxiosObservable(this.fetchInstance, config)
   }
 
-  public post (url: string, data?: any, options?: object): AxiosPromise<AxiosResponse> {
+  public post<T = any> (url: string, data?: any, options?: object): AxiosObservable<T> {
     let config = this.constructArgs('POST', url, data, options)
-    return this.fetchInstance(config)
+    return this.createAxiosObservable(this.fetchInstance, config)
   }
 
-  public put (url: string, data?: any, options?: object): AxiosPromise<AxiosResponse> {
+  public put<T = any> (url: string, data?: any, options?: object): AxiosObservable<T> {
     let config = this.constructArgs('PUT', url, data, options)
-    return this.fetchInstance(config)
+    return this.createAxiosObservable(this.fetchInstance, config)
   }
 
-  public delete (url: string, data?: any, options?: object): AxiosPromise<AxiosResponse> {
+  public delete<T = any> (url: string, data?: any, options?: object): AxiosObservable<T> {
     let config = this.constructArgs('DELETE', url, data, options)
-    return this.fetchInstance(config)
+    return this.createAxiosObservable(this.fetchInstance, config)
   }
-
-  // public all (fetchAll: any) {
-  //   return axios.all(fetchAll).then(axios.spread(function (...results) {
-  //     return Promise.resolve(results)
-  //   }))
-  // }
-
-  // 取消请求
-  // public cancel (message: any) {
-  //   return source.cancel(message)
-  // }
 
   /**
    * 构建参数
@@ -77,11 +59,10 @@ export default class Fetch {
   private constructArgs (methods: string, url: string, data?: any, options?: object): apiFetchConfig {
     let config: apiFetchConfig = {
       method: methods.toLocaleLowerCase(),
-      url: url,
-      fetchId: this.fetchId++
+      url: url
     }
     if (options) {
-      config.options = options
+      config.otherOptions = options
     }
 
     if (methods === 'GET' || methods === 'DELETE') {
@@ -101,9 +82,6 @@ export default class Fetch {
   private initIntercept () {
     this.fetchInstance.interceptors.request.use(
       (config) => {
-        // 执行前，需要增加cancelToken，并且放入数组中维护
-        this.addFetchSendCancelToken(config)
-        // 如果初始化有前置方法，则执行
         if (this.config.beforeRequest) {
           const conf = this.config.beforeRequest(config, this.config)
           return conf || config
@@ -123,8 +101,6 @@ export default class Fetch {
     // 返回参数时拦截
     this.fetchInstance.interceptors.response.use(
       (response: AxiosResponse) => {
-        // 在执行后需要清除之前存在的cancelToken
-        this.removeFetchSendCancelToken(response)
         if (this.config.beforeResponse) {
           const req = this.config.beforeResponse(response, this.config, response.config)
           return req || response
@@ -143,35 +119,32 @@ export default class Fetch {
     )
   }
 
-  private addFetchSendCancelToken (config: apiFetchConfig) {
-    const requestConfig = {
-      url: (config.baseURL || '') + config.url,
-      method: config.method,
-      paramsOrData: (config.method === 'get' || config.method === 'delete') ? config.params : config.data
-    }
-    // 增加前需要取消原本已经存在的
-    this.cancelFetchSendCancelToken(requestConfig, config, 'req')
-    // hashMap增加一个请求参数存储
-    this.fetchSendCancelTokenHashMap.set(config.fetchId, JSON.stringify(requestConfig))
-  }
+  private createAxiosObservable<T> (axiosPromiseFactory: (apiConfig: AxiosRequestConfig) => AxiosPromise<T>, config: apiFetchConfig): AxiosObservable<T> {
+    const observable: AxiosObservable<T> = new Observable(observer => {
+      this.fetchInstance(config).then(response => {
+        observer.next(response)
+        observer.complete()
+      }).catch(err => {
+        observer.error(err)
+      })
+    })
 
-  private removeFetchSendCancelToken (response: AxiosResponse) {
-    const { config } = response
-    const responseConfig = {
-      url: config.url,
-      method: config.method,
-      paramsOrData: (config.method === 'get' || config.method === 'delete') ? config.params : JSON.parse(config.data)
-    }
-    this.cancelFetchSendCancelToken(responseConfig, config, 'res')
-  }
+    const _subscribe = observable.subscribe.bind(observable)
 
-  private cancelFetchSendCancelToken (sendConfig: { url: string | undefined, method: string | undefined, paramsOrData?: any }, config: apiFetchConfig, type: 'res' | 'req') {
-    const configIndex = this.fetchSendCancelTokenHashMap.search(JSON.stringify(sendConfig))
-    if (configIndex !== null) {
-      if (type === 'req') {
-        config.cancel('请求已取消')
+    observable.subscribe = (...args: any[]) => {
+      const subscription = _subscribe(...args)
+      const _unsubscribe = subscription.unsubscribe.bind(subscription)
+
+      subscription.unsubscribe = () => {
+        if (config.cancel) {
+          config.cancel()
+        }
+        _unsubscribe()
       }
-      this.fetchSendCancelTokenHashMap.remove(configIndex)
+
+      return subscription
     }
+
+    return observable
   }
 }

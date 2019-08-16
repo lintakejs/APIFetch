@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "axios": "^0.18.0",
-    "hashmap": "^2.3.0"
+    "hashmap": "^2.3.0",
+    "rxjs": "^6.5.2"
   }
 }
