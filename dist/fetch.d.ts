@@ -1,22 +1,23 @@
-import { AxiosRequestConfig, AxiosResponse, AxiosPromise } from 'axios';
+import { Canceler, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { Observable } from 'rxjs';
 interface apiFetchConfig extends AxiosRequestConfig {
     beforeRequest?: (nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => void | apiFetchConfig;
-    requestError?: (err?: Error, nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => void | apiFetchConfig;
+    requestError?: (err?: Error, initConfig?: apiFetchConfig) => void | apiFetchConfig;
     beforeResponse?: (responseData: AxiosResponse, nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => any;
-    responseError?: (err?: Error, nowConfig?: apiFetchConfig, initConfig?: apiFetchConfig) => void | apiFetchConfig;
-    [propName: string]: any;
+    responseError?: (err?: Error, initConfig?: apiFetchConfig) => void | apiFetchConfig;
+    cancel?: Canceler;
+    otherOptions?: object;
+}
+interface AxiosObservable<T> extends Observable<AxiosResponse<T>> {
 }
 export default class Fetch {
     private config;
     private fetchInstance;
-    private fetchSendCancelToken;
-    private fetchSendCancelTokenHashMap;
-    private fetchId;
-    constructor(config?: apiFetchConfig);
-    get(url: string, data?: any, options?: object): AxiosPromise<AxiosResponse>;
-    post(url: string, data?: any, options?: object): AxiosPromise<AxiosResponse>;
-    put(url: string, data?: any, options?: object): AxiosPromise<AxiosResponse>;
-    delete(url: string, data?: any, options?: object): AxiosPromise<AxiosResponse>;
+    constructor(config: apiFetchConfig);
+    get<T = any>(url: string, data?: any, options?: object): AxiosObservable<T>;
+    post<T = any>(url: string, data?: any, options?: object): AxiosObservable<T>;
+    put<T = any>(url: string, data?: any, options?: object): AxiosObservable<T>;
+    delete<T = any>(url: string, data?: any, options?: object): AxiosObservable<T>;
     /**
      * 构建参数
      *
@@ -31,8 +32,6 @@ export default class Fetch {
      */
     private constructArgs;
     private initIntercept;
-    private addFetchSendCancelToken;
-    private removeFetchSendCancelToken;
-    private cancelFetchSendCancelToken;
+    private createAxiosObservable;
 }
 export {};
