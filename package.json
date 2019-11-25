@@ -1,5 +1,5 @@
 {
-  "name": "@type/api-fetch",
+  "name": "@types/axios-rx-observable",
   "version": "2.1.0",
   "description": "给予axios封装的请求类",
   "main": "dist/index.js",

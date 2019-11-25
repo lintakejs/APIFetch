@@ -11,7 +11,7 @@ You can install with npm.
 
 
 ```javascript
-import Fetch from 'axios-rx-observable'
+import Fetch from '@types/axios-rx-observable'
 
 const Fetch = new Fetch({
   beforeRequest?: (nowConfig?: AxiosRequestConfig, initConfig?: AxiosRequestConfig) => void | AxiosRequestConfig;
